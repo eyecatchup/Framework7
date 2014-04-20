@@ -14,18 +14,30 @@ app.getDeviceInfo = function () {
     if (android) {
         device.os = 'android';
         device.osVersion = android[2];
+        device.android = true;
     }
     if (ipad || iphone || ipod) {
         device.os = 'ios';
+        device.ios = true;
     }
     // iOS
-    if (iphone && !ipod) device.osVersion = iphone[2].replace(/_/g, '.');
-    if (ipad) device.osVersion = ipad[2].replace(/_/g, '.');
-    if (ipod) device.osVersion = ipod[3] ? ipod[3].replace(/_/g, '.') : null;
+    device.iphone = false;
+    device.ipad = false;
+    if (iphone && !ipod) {
+        device.osVersion = iphone[2].replace(/_/g, '.');
+        device.iphone = true;
+    }
+    if (ipad) {
+        device.osVersion = ipad[2].replace(/_/g, '.');
+        device.ipad = true;
+    }
+    if (ipod) {
+        device.osVersion = ipod[3] ? ipod[3].replace(/_/g, '.') : null;
+        device.iphone = true;
+    }
 
     // Webview
-    device.webview = !!navigator.standalone;
-
+    device.webview = (iphone || ipad || ipod) && ua.match(/.*AppleWebKit(?!.*Safari)/i);
         
     // Minimal UI
     if (device.os && device.os === 'ios') {
@@ -41,15 +53,18 @@ app.getDeviceInfo = function () {
     var windowHeight = $(window).height();
     device.statusBar = false;
     if (
-        // iPhone 5
-        (windowWidth === 320 && windowHeight === 568) ||
-        (windowWidth === 568 && windowHeight === 320) ||
-        // iPhone 4
-        (windowWidth === 320 && windowHeight === 480) ||
-        (windowWidth === 480 && windowHeight === 320) ||
-        // iPad
-        (windowWidth === 768 && windowHeight === 1024) ||
-        (windowWidth === 1024 && windowHeight === 768)
+        device.webview &&
+        (
+            // iPhone 5
+            (windowWidth === 320 && windowHeight === 568) ||
+            (windowWidth === 568 && windowHeight === 320) ||
+            // iPhone 4
+            (windowWidth === 320 && windowHeight === 480) ||
+            (windowWidth === 480 && windowHeight === 320) ||
+            // iPad
+            (windowWidth === 768 && windowHeight === 1024) ||
+            (windowWidth === 1024 && windowHeight === 768)
+        )
     ) {
         device.statusBar = true;
     }

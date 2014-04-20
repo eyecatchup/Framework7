@@ -76,9 +76,12 @@ Dom7.prototype = {
         return this;
     },
     transition: function (duration) {
+        if (typeof duration !== 'string') {
+            duration = duration + 'ms';
+        }
         for (var i = 0; i < this.length; i++) {
             var elStyle = this[i].style;
-            elStyle.webkitTransitionDuration = elStyle.MsTransitionDuration = elStyle.msTransitionDuration = elStyle.MozTransitionDuration = elStyle.OTransitionDuration = elStyle.transitionDuration = duration + 'ms';
+            elStyle.webkitTransitionDuration = elStyle.MsTransitionDuration = elStyle.msTransitionDuration = elStyle.MozTransitionDuration = elStyle.OTransitionDuration = elStyle.transitionDuration = duration;
         }
         return this;
     },
@@ -113,38 +116,6 @@ Dom7.prototype = {
         }
 
         return this;
-    },
-    tap: function (targetSelector, listener) {
-        var dom = this;
-        var isTouched, isMoved, touchesStart = {}, touchStartTime, deltaX, deltaY;
-        if (arguments.length === 1) {
-            listener = arguments[0];
-            targetSelector = false;
-        }
-        function handleTouchStart(e) {
-            isTouched = true;
-            isMoved = false;
-        }
-        function handleTouchMove(e) {
-            if (!isTouched || isMoved) return;
-            isMoved = true;
-        }
-        function handleTouchEnd(e) {
-            e.preventDefault(); // - to prevent Safari's Ghost click
-            if (isTouched && !isMoved) {
-                /*jshint validthis:true */
-                listener.call(this, e);
-            }
-            isTouched = isMoved = false;
-        }
-        if ($.supportTouch) {
-            dom.on('touchstart', targetSelector, handleTouchStart);
-            dom.on('touchmove', targetSelector, handleTouchMove);
-            dom.on('touchend', targetSelector, handleTouchEnd);
-        }
-        else {
-            dom.on('click', targetSelector, listener);
-        }
     },
     off: function (event, listener) {
         for (var i = 0; i < this.length; i++) {
@@ -338,6 +309,30 @@ Dom7.prototype = {
             if (this[i] === el) return i;
         }
     },
+    index: function () {
+        if (this[0]) {
+            var child = this[0];
+            var i = 0;
+            while ((child = child.previousSibling) != null)
+                i++;
+            return i;
+        }
+        else return undefined;
+    },
+    eq: function (index) {
+        if (typeof index === 'undefined') return this;
+        var length = this.length;
+        var returnIndex;
+        if (index > length - 1) {
+            return new Dom7([]);
+        }
+        if (index < 0) {
+            returnIndex = length + index;
+            if (returnIndex < 0) return new Dom7([]);
+            else return new Dom7([this[returnIndex]]);
+        }
+        return new Dom7([this[index]]);
+    },
     append: function (newChild) {
         for (var i = 0; i < this.length; i++) {
             if (typeof newChild === 'string') {
@@ -455,8 +450,9 @@ Dom7.prototype = {
         }
         return this;
     },
-    
 };
+
+// Selector 
 var $ = function (selector, context) {
     var arr = [], i = 0;
     if (selector) {
@@ -480,6 +476,28 @@ var $ = function (selector, context) {
     }
     return new Dom7(arr);
 };
+// Shortcuts
+(function () {
+    var shortcuts = ('click blur focus focusin focusout keyup keydown keypress submit change mousedown mousemove mouseup mouseenter mouseleave mouseout mouseover touchstart touchend touchmove resize scroll').split(' ');
+    var notTrigger = ('resize scroll').split(' ');
+    function createMethod(name) {
+        Dom7.prototype[name] = function (handler) {
+            var i;
+            if (typeof handler === 'undefined') {
+                for (i = 0; i < this.length; i++) {
+                    if (notTrigger.indexOf(name) < 0) this[i][name]();
+                }
+                return this;
+            }
+            else {
+                return this.on(name, handler);
+            }
+        };
+    }
+    for (var i = 0; i < shortcuts.length; i++) {
+        createMethod(shortcuts[i]);
+    }
+})();
 // Utilites
 $.parseUrlQuery = function (url) {
     var query = {}, i, params, param;
@@ -509,3 +527,5 @@ $.supportTouch = (function () {
     return !!(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch);
 })();
 $.fn = Dom7.prototype;
+// Export Selectors engine to global Framework7
+Framework7.$ = $;

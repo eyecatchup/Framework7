@@ -22,6 +22,10 @@ window.Framework7 = function (params) {
         cache: true,
         cacheDuration: 1000 * 60 * 10, // Ten minutes 
         preloadPreviousPage: true,
+        // Fast clicks
+        fastClicks : true,
+        // 
+        animateNavBackIcon: false,
         // Swipe Back
         swipeBackPage: true,
         swipeBackPageThreshold: 0,
@@ -34,10 +38,14 @@ window.Framework7 = function (params) {
         // Swipeout
         swipeout: true,
         swipeoutNoFollow: false,
+        // Smart Select Back link template
+        smartSelectBackTemplate: '<div class="left"><a href="#" class="back link"><i class="icon icon-back-blue"></i><span>Back</span></a></div>',
         // Panels
+        swipePanel: false, // or 'left' or 'right'
+        swipePanelNoFollow: false,
+        swipePanelThreshold: 0,
         panelsCloseByOutside: true,
         panelsVisibleZIndex: 6000,
-        panelsAnimationDuration: 400,
         // Modals
         modalTemplate: '<div class="modal {{noButtons}}">' +
                             '<div class="modal-inner">' +
@@ -73,4 +81,7 @@ window.Framework7 = function (params) {
         move: $.supportTouch ? 'touchmove' : 'mousemove',
         end: $.supportTouch ? 'touchend' : 'mouseup'
     };
+
+    // Link to local storage
+    app.ls = localStorage;
     

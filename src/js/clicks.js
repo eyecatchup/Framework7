@@ -2,14 +2,24 @@
 ************   Handle clicks and make them fast (on tap);   ************
 ===============================================================================*/
 app.initClickEvents = function () {
-    function handleTap(e) {
+    function handleClicks(e) {
         /*jshint validthis:true */
         var clicked = $(this);
         var url = clicked.attr('href');
-        // External
-        if (clicked.hasClass('external')) {
-            return;
+        if (clicked[0].nodeName.toLowerCase() === 'a') {
+            // External
+            if (clicked.hasClass('external')) {
+                return;
+            }
+            else {
+                e.preventDefault();
+            }
         }
+        // Smart Select
+        if (clicked.hasClass('smart-select')) {
+            if (app.smartSelectOpen) app.smartSelectOpen(clicked);
+        }
+        
         // Open Panel
         if (clicked.hasClass('open-panel')) {
             if ($('.panel').length === 1) {
@@ -60,35 +70,25 @@ app.initClickEvents = function () {
                 app.closeModal();
             if ($('.popover.modal-in').length > 0) app.closeModal('.popover.modal-in');
         }
-        // Radios/checkboxes
-        if (clicked.hasClass('label-checkbox') || clicked.hasClass('label-radio')) {
-            var input = clicked.find('input');
-            if (input.attr('type') === 'checkbox') {
-                if (input[0].checked === true) input[0].checked = false;
-                else input[0].checked = true;
-            }
-            if (input.attr('type') === 'radio') {
-                clicked.find('input')[0].checked = true;
-            }
-            input.trigger('change');
-            return;
-        }
-        if ($.supportTouch) {
-            if (clicked.parent().hasClass('label-switch')) {
-                clicked[0].checked = !clicked[0].checked;
-                clicked.trigger('change');
-            }
-        }
         
         // Tabs
         if (clicked.hasClass('tab-link')) {
             var newTab = $(clicked.attr('href'));
+            if (newTab.length === 0) return;
             var oldTab = newTab.parent().find('.tab.active').removeClass('active');
             newTab.addClass('active');
+            newTab.trigger('show');
             var clickedParent = clicked.parent();
             if (clickedParent.hasClass('buttons-row') || clicked.parents('.tabbar').length > 0) {
                 clickedParent.find('.active').removeClass('active');
                 clicked.addClass('active');
+            }
+            if (newTab.find('.navbar').length > 0) {
+                // Find tab's view
+                var viewContainer;
+                if (newTab.hasClass('view')) viewContainer = newTab[0];
+                else viewContainer = newTab.parents('.view')[0];
+                app.sizeNavbars(viewContainer);
             }
         }
         // Swipeout Delete
@@ -115,6 +115,9 @@ app.initClickEvents = function () {
             }
             else {
                 view = clicked.parents('.view')[0] && clicked.parents('.view')[0].f7View;
+                if (view && view.params.linksView) {
+                    view = $(view.params.linksView)[0].f7View;
+                }
             }
             if (!view) {
                 for (var i = 0; i < app.views.length; i++) {
@@ -126,12 +129,5 @@ app.initClickEvents = function () {
             else view.loadPage(clicked.attr('href'));
         }
     }
-    $(document).tap('a, .open-panel, .close-panel, .panel-overlay, .modal-overlay, .swipeout-delete, .close-popup, .open-popup, .open-popover, .label-checkbox, .label-radio, .label-switch, .label-switch input', handleTap);
-    
-    //Disable clicks
-    function handleClick(e) {
-        /*jshint validthis:true */
-        if (!$(this).hasClass('external')) e.preventDefault();
-    }
-    $(document).on('click', 'a, .label-checkbox, .label-radio', handleClick);
+    $(document).on('click', 'a, .open-panel, .close-panel, .panel-overlay, .modal-overlay, .swipeout-delete, .close-popup, .open-popup, .open-popover, .smart-select', handleClicks);
 };
