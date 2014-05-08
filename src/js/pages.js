@@ -63,7 +63,7 @@ app.pageAnimCallbacks = function (callback, view, params) {
 // Init Page Events and Manipulations
 app.initPage = function (pageContainer) {
     // Size navbars on page load
-    if (app.sizeNavbars) app.sizeNavbars($(pageContainer).parents('.view')[0]);
+    if (app.sizeNavbars) app.sizeNavbars($(pageContainer).parents('.' + app.params.viewClass)[0]);
     // Init messages
     if (app.initMessages) app.initMessages(pageContainer);
     // Init forms storage
@@ -87,7 +87,7 @@ function _findElement(selector, container, view) {
         }
         if (found.length > 1) {
             // Search in main view
-            found = container.find('.view-main ' + selector);
+            found = container.find('.' + app.params.viewMainClass + ' ' + selector);
         }
     }
     if (found.length === 1) return found;
@@ -302,7 +302,10 @@ function _load(view, url, content) {
 
     // Dynamic navbar animation
     if (dynamicNavbar) {
-        _animateNavbars(oldNavbarInner, newNavbarInner, 'to-left', view);
+        setTimeout(function () {
+            _animateNavbars(oldNavbarInner, newNavbarInner, 'to-left', view);
+        }, 0);
+            
     }
 
     newPage.animationEnd(function (e) {
@@ -379,7 +382,9 @@ app.goBack = function (view, url, preloadOnly, pushState) {
 
         // Dynamic navbar animation
         if (dynamicNavbar) {
-            _animateNavbars(newNavbarInner, oldNavbarInner, 'to-right', view);
+            setTimeout(function () {
+                _animateNavbars(newNavbarInner, oldNavbarInner, 'to-right', view);
+            }, 0);
         }
         
         newPage.animationEnd(function () {

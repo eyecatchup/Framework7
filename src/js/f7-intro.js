@@ -37,13 +37,16 @@ window.Framework7 = function (params) {
         ajaxLinks: false, // or CSS selector
         // Pull To Refresh
         pullToRefresh: true,
+        // Sortable
+        sortable: true,
         // Swipeout
         swipeout: true,
         swipeoutNoFollow: false,
         // Smart Select Back link template
-        smartSelectBackTemplate: '<div class="left"><a href="#" class="back link"><i class="icon icon-back-blue"></i><span>Back</span></a></div>',
+        smartSelectBackTemplate: '<div class="left sliding"><a href="#" class="back link"><i class="icon icon-back-blue"></i><span>Back</span></a></div>',
         // Panels
         swipePanel: false, // or 'left' or 'right'
+        swipePanelActiveArea: 0,
         swipePanelNoFollow: false,
         swipePanelThreshold: 0,
         panelsCloseByOutside: true,
@@ -66,7 +69,11 @@ window.Framework7 = function (params) {
         modalPopupCloseByOutside: true,
         modalPreloaderTitle: 'Loading... ',
         // Auto init
-        init: true
+        init: true,
+        // Name space
+        viewClass: 'view',
+        viewMainClass: 'view-main',
+        viewsClass: 'views',
     };
 
     // Extend defaults with parameters

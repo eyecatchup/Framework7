@@ -86,8 +86,8 @@ app.initClickEvents = function () {
             if (newTab.find('.navbar').length > 0) {
                 // Find tab's view
                 var viewContainer;
-                if (newTab.hasClass('view')) viewContainer = newTab[0];
-                else viewContainer = newTab.parents('.view')[0];
+                if (newTab.hasClass(app.params.viewClass)) viewContainer = newTab[0];
+                else viewContainer = newTab.parents('.' + app.params.viewClass)[0];
                 app.sizeNavbars(viewContainer);
             }
         }
@@ -103,6 +103,11 @@ app.initClickEvents = function () {
             }
                 
         }
+        // Sortable
+        if (clicked.hasClass('sortable-toggle')) {
+            var sortable = clicked.data('sortable');
+            app.sortableToggle(sortable);
+        }
         // Load Page
         if (app.params.ajaxLinks && !clicked.is(app.params.ajaxLinks)) {
             return;
@@ -114,7 +119,7 @@ app.initClickEvents = function () {
                 view = $(clicked.attr('data-view'))[0].f7View;
             }
             else {
-                view = clicked.parents('.view')[0] && clicked.parents('.view')[0].f7View;
+                view = clicked.parents('.' + app.params.viewClass)[0] && clicked.parents('.' + app.params.viewClass)[0].f7View;
                 if (view && view.params.linksView) {
                     view = $(view.params.linksView)[0].f7View;
                 }
@@ -129,5 +134,5 @@ app.initClickEvents = function () {
             else view.loadPage(clicked.attr('href'));
         }
     }
-    $(document).on('click', 'a, .open-panel, .close-panel, .panel-overlay, .modal-overlay, .swipeout-delete, .close-popup, .open-popup, .open-popover, .smart-select', handleClicks);
+    $(document).on('click', 'a, .open-panel, .close-panel, .panel-overlay, .modal-overlay, .swipeout-delete, .close-popup, .open-popup, .open-popover, .smart-select, .sortable-toggle', handleClicks);
 };
