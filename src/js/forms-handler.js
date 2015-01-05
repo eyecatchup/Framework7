@@ -19,7 +19,7 @@ app.formDeleteData = function (formId) {
     // Delete form data from local storage also
     if (app.ls['f7form-' + formId]) {
         app.ls['f7form-' + formId] = '';
-        delete app.ls['f7form-' + formId];
+        app.ls.removeItem('f7form-' + formId);
     }
 };
 app.formGetData = function (formId) {
@@ -76,6 +76,7 @@ app.formToJSON = function (form) {
         }
             
     });
+    form.trigger('formToJSON', {formData: formData});
 
     return formData;
 };
@@ -125,13 +126,15 @@ app.formFromJSON = function (form, formData) {
         }
             
     });
+    form.trigger('formFromJSON', {formData: formData});
 };
 app.initFormsStorage = function (pageContainer) {
     pageContainer = $(pageContainer);
     if (pageContainer.length === 0) return;
 
     var forms = pageContainer.find('form.store-data');
-
+    if (forms.length === 0) return;
+    
     // Parse forms data and fill form if there is such data
     forms.each(function () {
         var id = this.getAttribute('id');
@@ -140,14 +143,24 @@ app.initFormsStorage = function (pageContainer) {
         if (formData) app.formFromJSON(this, formData);
     });
     // Update forms data on inputs change
-    forms.on('change submit', function () {
-        var formId = this.id;
+    function storeForm() {
+        /*jshint validthis:true */
+        var form = $(this);
+        var formId = form[0].id;
         if (!formId) return;
-        var formJSON = app.formToJSON(this);
+        var formJSON = app.formToJSON(form);
         if (!formJSON) return;
         app.formStoreData(formId, formJSON);
-        $(this).trigger('store', {data: formJSON});
-    });
+        form.trigger('store', {data: formJSON});
+    }
+    forms.on('change submit', storeForm);
+
+    // Detach Listeners
+    function pageBeforeRemove() {
+        forms.off('change submit', storeForm);
+        pageContainer.off('pageBeforeRemove', pageBeforeRemove);
+    }
+    pageContainer.on('pageBeforeRemove', pageBeforeRemove);
 };
 
 // Ajax submit on forms
@@ -166,13 +179,19 @@ $(document).on('submit change', 'form.ajax-submit, form.ajax-submit-onchange', f
     if (method === 'POST') data = new FormData(form[0]);
     else data = $.serializeObject(app.formToJSON(form[0]));
 
-    $.ajax({
+    var xhr = $.ajax({
         method: method,
         url: url,
         contentType: contentType,
         data: data,
+        beforeSend: function (xhr) {
+            form.trigger('beforeSubmit', {data:data, xhr: xhr});
+        },
+        error: function (xhr) {
+            form.trigger('submitError', {data:data, xhr: xhr});  
+        },
         success: function (data) {
-            form.trigger('submitted', {data: data});
+            form.trigger('submitted', {data: data, xhr: xhr});
         }
     });
 });

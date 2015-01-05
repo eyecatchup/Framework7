@@ -10,35 +10,67 @@ module.exports = function (grunt) {
         filename: 'framework7'
     };
 
+
+    var customModules = grunt.file.readJSON('modules.json');
+    var customBanner = '/*\n' +
+                    ' * <%= pkg.name %> <%= pkg.version %> - Custom Build\n' +
+                    ' *\n' +
+                    ' * Included modules: <%= modulesList %>\n' +
+                    ' *\n' +
+                    ' * Copyright <%= grunt.template.today("yyyy") %>, <%= pkg.author %>\n' +
+                    ' * The iDangero.us\n' +
+                    ' * http://www.idangero.us/\n' +
+                    ' *\n' +
+                    ' * Created on: <%= grunt.template.today("mmmm d, yyyy, HH:MM") %>\n' +
+                    '*/\n';
+
     // List of js files to concatenate
     var jsFilesList = [
         'src/js/wrap-start.js',
         'src/js/f7-intro.js',
         'src/js/views.js',
         'src/js/navbars.js',
+        'src/js/searchbar.js',
+        'src/js/messagebar.js',
         'src/js/xhr.js',
         'src/js/pages.js',
+        'src/js/router.js',
         'src/js/modals.js',
         'src/js/panels.js',
+        'src/js/lazy-load.js',
         'src/js/messages.js',
         'src/js/swipeout.js',
         'src/js/sortable.js',
         'src/js/smart-select.js',
+        'src/js/virtual-list.js',
         'src/js/pull-to-refresh.js',
+        'src/js/infinite-scroll.js',
+        'src/js/scroll-toolbars.js',
+        'src/js/tabs.js',
+        'src/js/accordion.js',
         'src/js/fast-clicks.js',
         'src/js/clicks.js',
         'src/js/resize.js',
         'src/js/forms-handler.js',
         'src/js/push-state.js',
+        'src/js/slider.js',
+        'src/js/photo-browser.js',
+        'src/js/picker.js',
+        'src/js/notifications.js',
+        'src/js/template7-templates.js',
+        'src/js/plugins.js',
         'src/js/init.js',
         'src/js/f7-outro.js',
-        'src/js/dom.js',
-        'src/js/dom-utils.js',
-        'src/js/dom-ajax.js',
-        'src/js/dom-export.js',
+        'src/js/dom7-intro.js',
+        'src/js/dom7-methods.js',
+        'src/js/dom7-ajax.js',
+        'src/js/dom7-utils.js',
+        'src/js/dom7-outro.js',
         'src/js/proto-support.js',
         'src/js/proto-device.js',
-        'src/js/wrap-end.js'
+        'src/js/proto-plugins.js',
+        'src/js/wrap-end.js',
+        'src/js/template7.js'
     ];
 
     // Project configuration.
@@ -82,7 +114,9 @@ module.exports = function (grunt) {
                     cleancss: false
                 },
                 files: {
-                    'build/css/framework7.css' : ['src/less/framework7.less']
+                    'build/css/<%= framework7.filename %>.css' : ['src/less/<%= framework7.filename %>.less'],
+                    'build/css/<%= framework7.filename %>.rtl.css' : ['src/less/<%= framework7.filename %>.rtl.less'],
+                    'build/css/<%= framework7.filename %>.themes.css' : ['src/less/<%= framework7.filename %>.themes.less']
                 }
             },
             dist: {
@@ -91,31 +125,9 @@ module.exports = function (grunt) {
                     cleancss: true
                 },
                 files: {
-                    'dist/css/framework7.min.css' : ['src/less/framework7.less']
-                }
-            },
-            build_rails: {
-                options: {
-                    paths: ['less'],
-                    cleancss: false,
-                    modifyVars: {
-                        imgBaseUrl: '"../assets"'
-                    }
-                },
-                files: {
-                    'build_rails/stylesheets/framework7.css' : ['src/less/framework7.less']
-                }
-            },
-            dist_rails: {
-                options: {
-                    paths: ['less'],
-                    cleancss: true,
-                    modifyVars: {
-                        imgBaseUrl: '"../assets"'
-                    }
-                },
-                files: {
-                    'dist_rails/stylesheets/framework7.min.css' : ['src/less/framework7.less']
+                    'dist/css/<%= framework7.filename %>.min.css' : ['src/less/<%= framework7.filename %>.less'],
+                    'dist/css/<%= framework7.filename %>.rtl.min.css' : ['src/less/<%= framework7.filename %>.rtl.less'],
+                    'dist/css/<%= framework7.filename %>.themes.min.css' : ['src/less/<%= framework7.filename %>.themes.less']
                 }
             },
             kitchen: {
@@ -152,6 +164,20 @@ module.exports = function (grunt) {
                         src: ['*.less'],
                         dest: 'examples/split-view-panel/css/',
                         ext: '.css'
+                    },
+                    {
+                        expand: true,
+                        cwd: 'examples/inline-pages/less/',
+                        src: ['*.less'],
+                        dest: 'examples/inline-pages/css/',
+                        ext: '.css'
+                    },
+                    {
+                        expand: true,
+                        cwd: 'examples/template7-pages/less/',
+                        src: ['*.less'],
+                        dest: 'examples/template7-pages/css/',
+                        ext: '.css'
                     }
                 ]
             },
@@ -176,6 +202,24 @@ module.exports = function (grunt) {
                     },
                 ]
             },
+            custom: {
+                options: {
+                    paths: ['less'],
+                    cleancss: false
+                },
+                files: {
+                    'custom/css/<%= framework7.filename %>.custom.css' : ['custom/<%= framework7.filename %>.custom.less'],
+                }
+            },
+            custom_min: {
+                options: {
+                    paths: ['less'],
+                    cleancss: true
+                },
+                files: {
+                    'custom/css/<%= framework7.filename %>.custom.min.css' : ['custom/<%= framework7.filename %>.custom.less'],
+                }
+            },
         },
         concat: {
             options: {
@@ -185,10 +229,17 @@ module.exports = function (grunt) {
                     if (filename.indexOf('.js') >= 0) {
                         var addIndent = '        ';
                         filename = filename.replace('src/js/', '');
-                        if (filename === 'wrap-start.js' || filename === 'wrap-end.js') {
+                        if (filename === 'wrap-start.js' || filename === 'wrap-end.js' || filename === 'template7.js') {
                             addIndent = '';
                         }
-                        if (filename === 'f7-intro.js' || filename === 'f7-outro.js' || filename.indexOf('dom') >= 0 || filename.indexOf('proto') >= 0) addIndent = '    ';
+                        var add4spaces = ('f7-intro.js f7-outro.js proto-device.js proto-plugins.js proto-support.js dom7-intro.js dom7-outro.js').split(' ');
+                        if (add4spaces.indexOf(filename) >= 0) {
+                            addIndent = '    ';
+                        }
+                        var add8spaces = ('dom7-methods.js dom7-ajax.js dom7-utils.js').split(' ');
+                        if (add8spaces.indexOf(filename) >= 0) {
+                            addIndent = '        ';
+                        }
                         src = grunt.util.normalizelf(src);
                         return src.split(grunt.util.linefeed).map(function (line) {
                             return addIndent + line;
@@ -199,7 +250,11 @@ module.exports = function (grunt) {
             },
             js: {
                 src: jsFilesList,
-                dest: 'build/js/<%= framework7.filename %>.js'
+                dest: 'build/js/<%= framework7.filename %>.js',
+                sourceMap: true,
+                options: {
+                    sourceMap: true
+                }
             },
             css_build: {
                 src: ['build/css/<%= framework7.filename %>.css'],
@@ -209,30 +264,45 @@ module.exports = function (grunt) {
                 src: ['dist/css/<%= framework7.filename %>.min.css'],
                 dest: 'dist/css/<%= framework7.filename %>.min.css'
             },
-            js_rails: {
-                src: jsFilesList,
-                dest: 'build_rails/javascripts/<%= framework7.filename %>.js'
+            js_custom: {
+                options: {
+                    banner: customBanner
+                },
+                src: '<%= modulesJsList %>',
+                dest: 'custom/js/<%= framework7.filename %>.custom.js'
             },
-            css_build_rails: {
-                src: ['build_rails/stylesheets/<%= framework7.filename %>.css'],
-                dest: 'build_rails/stylesheets/<%= framework7.filename %>.css'
+            less_custom: {
+                options: {
+                    banner: '',
+                },
+                src: '<%= modulesLessList %>',
+                dest: 'custom/<%= framework7.filename %>.custom.less'
             },
-            css_dist_rails: {
-                src: ['dist_rails/stylesheets/<%= framework7.filename %>.min.css'],
-                dest: 'dist_rails/stylesheets/<%= framework7.filename %>.min.css'
+            css_custom: {
+                options: {
+                    banner: customBanner
+                },
+                files: {
+                    'custom/css/<%= framework7.filename %>.custom.css' : ['custom/css/<%= framework7.filename %>.custom.css'],
+                    'custom/css/<%= framework7.filename %>.custom.min.css' : ['custom/css/<%= framework7.filename %>.custom.min.css'],
+                }
             }
         },
         uglify: {
             options: {
-                banner: '<%= banner %>'
+                banner: '<%= banner %>',
+                sourceMap: true
             },
             dist: {
                 src: ['dist/js/<%= framework7.filename %>.js'],
                 dest: 'dist/js/<%= framework7.filename %>.min.js',
             },
-            rails: {
-                src: ['dist_rails/javascripts/<%= framework7.filename %>.js'],
-                dest: 'dist_rails/javascripts/<%= framework7.filename %>.min.js',
+            custom: {
+                options: {
+                    banner: customBanner
+                },
+                src: ['custom/js/<%= framework7.filename %>.custom.js'],
+                dest: 'custom/js/<%= framework7.filename %>.custom.min.js',
             }
         },
         jshint: {
@@ -240,19 +310,14 @@ module.exports = function (grunt) {
                 jshintrc: '.jshintrc',
                 reporter: require('jshint-stylish')
             },
-            gruntfile: {
+            build: {
                 src: ['Gruntfile.js', 'build/js/framework7.js']
-            }
-        },
-        jshint_rails: {
-            options: {
-                jshintrc: '.jshintrc',
-                reporter: require('jshint-stylish')
             },
-            gruntfile: {
-                src: ['Gruntfile.js', 'build_rails/javascripts/framework7.js']
+            custom: {
+                src: ['custom/js/<%= framework7.filename %>.custom.js']
             }
         },
+        
         watch: {
             build: {
                 files: ['src/**'],
@@ -272,7 +337,9 @@ module.exports = function (grunt) {
                 files: [
                     'examples/tab-bar/jade/**', 'examples/tab-bar/less/**',
                     'examples/split-view/jade/**', 'examples/split-view/less/**',
-                    'examples/split-view-panel/jade/**', 'examples/split-view-panel/less/**'
+                    'examples/split-view-panel/jade/**', 'examples/split-view-panel/less/**',
+                    'examples/inline-pages/jade/**', 'examples/inline-pages/less/**',
+                    'examples/template7-pages/jade/**', 'examples/template7-pages/less/**'
                 ],
                 tasks: ['jade:examples', 'less:examples'],
                 options: {
@@ -294,38 +361,12 @@ module.exports = function (grunt) {
             build: {
                 options: {
                     pretty: true,
-                    data: function () {
-                        return {
-                            cssDir: 'css',
-                            jsDir: 'js',
-                            imgDir: 'img'
-                        };
-                    }
                 },
                 files: [{
                     expand: true,
                     cwd: 'src/templates/',
                     src: ['*.jade'],
                     dest: 'build/',
-                    ext: '.html'
-                }]
-            },
-            build_rails: {
-                options: {
-                    pretty: true,
-                    data: function () {
-                        return {
-                            cssDir: 'stylesheets',
-                            jsDir: 'javascripts',
-                            imgDir: 'images'
-                        };
-                    }
-                },
-                files: [{
-                    expand: true,
-                    cwd: 'src/templates/',
-                    src: ['*.jade'],
-                    dest: 'build_rails/',
                     ext: '.html'
                 }]
             },
@@ -367,7 +408,20 @@ module.exports = function (grunt) {
                         dest: 'examples/split-view-panel/',
                         ext: '.html'
                     },
-                    
+                    {
+                        expand: true,
+                        cwd: 'examples/inline-pages/jade/',
+                        src: ['*.jade'],
+                        dest: 'examples/inline-pages/',
+                        ext: '.html'
+                    },
+                    {
+                        expand: true,
+                        cwd: 'examples/template7-pages/jade/',
+                        src: ['*.jade'],
+                        dest: 'examples/template7-pages/',
+                        ext: '.html'
+                    }
                 ]
             },
             apps: {
@@ -425,38 +479,6 @@ module.exports = function (grunt) {
                     }
                 ]
             },
-            build_rails: {
-                files: [
-                    {
-                        expand: true,
-                        cwd: 'src/img',
-                        src: ['**'],
-                        dest: 'build_rails/images'
-                    },
-                    {
-                        expand: true,
-                        cwd: 'src/my-app/',
-                        src: ['my-app.css'],
-                        dest: 'build_rails/stylesheets/'
-                    },
-                    {
-                        expand: true,
-                        cwd: 'src/my-app/',
-                        src: ['my-app.js'],
-                        dest: 'build_rails/javascripts/'
-                    }
-                ]
-            },
-            dist_rails: {
-                files: [
-                    {
-                        expand: true,
-                        cwd: 'build_rails/',
-                        src: ['**'],
-                        dest: 'dist_rails/'
-                    }
-                ]
-            }
         },
     });
 
@@ -468,7 +490,7 @@ module.exports = function (grunt) {
         'concat:js',
         'less:build',
         'concat:css_build',
-        'jshint',
+        'jshint:build',
     ]);
 
     // Build a new version of the library
@@ -476,7 +498,7 @@ module.exports = function (grunt) {
         'concat:js',
         'less:build',
         'concat:css_build',
-        'jshint',
+        'jshint:build',
         'copy:build',
         'jade:build',
     ]);
@@ -488,25 +510,13 @@ module.exports = function (grunt) {
         'less:dist',
         'concat:css_build',
         'concat:css_dist',
-        'jshint',
+        'jshint:build',
         'copy:build',
         'jade:build',
         'copy:dist',
         'uglify:dist'
     ]);
 
-    // Build a new rails asset pipeline compatible version of the library
-    this.registerTask('rails', 'Builds a rails version of <%= pkg.name %>', [
-        'concat:js_rails',
-        'less:build_rails',
-        'less:dist_rails',
-        'concat:css_build_rails',
-        'concat:css_dist_rails',
-        'copy:build_rails',
-        'jade:build_rails',
-        'copy:dist_rails',
-        'uglify:rails'
-    ]);
 
     // Kitchen Sink
     this.registerTask('kitchen', 'Builds a kithcen sink', [
@@ -529,5 +539,61 @@ module.exports = function (grunt) {
         'open',
         'watch'
     ]);
+
+    // Custom Build
+    this.registerTask('custom', 'Include modules in custom build', function (modules) {
+        if (modules) modules = modules.split(',');
+        modules = modules || [];
+        var modulesJsList = [], modulesLessList = [];
+        var i, module;
+        modulesJsList.push.apply(modulesJsList, customModules.core_intro.js);
+        modulesLessList.push.apply(modulesLessList, customModules.core_intro.less);
+
+        for (i = 0; i < modules.length; i++) {
+            module = customModules[modules[i]];
+            if (module.dependencies.length > 0) {
+                modules.push.apply(modules, module.dependencies);
+            }
+        }
+        for (i = 0; i < modules.length; i++) {
+            module = customModules[modules[i]];
+            if (!(module)) continue;
+
+            if (module.js.length > 0) {
+                modulesJsList.push.apply(modulesJsList, module.js);
+            }
+            if (module.less.length > 0) {
+                modulesLessList.push.apply(modulesLessList, module.less);
+            }
+        }
+        modulesJsList.push.apply(modulesJsList, customModules.core_outro.js);
+        modulesLessList.push.apply(modulesLessList, customModules.core_outro.less);
+
+        // Unique
+        var uniqueJsList = [];
+        var uniqueLessList = [];
+        for (i = 0; i < modulesJsList.length; i++) {
+            if (uniqueJsList.indexOf(modulesJsList[i]) < 0) uniqueJsList.push(modulesJsList[i]);
+        }
+        for (i = 0; i < modulesLessList.length; i++) {
+            if (uniqueLessList.indexOf(modulesLessList[i]) < 0) uniqueLessList.push(modulesLessList[i]);
+        }
+
+        // Tasks vars
+        grunt.config.set('modulesJsList', uniqueJsList);
+        grunt.config.set('modulesLessList', uniqueLessList);
+        grunt.config.set('modulesList', modules.join(', '));
+
+        // Run tasks
+        grunt.task.run([
+            'concat:js_custom',
+            'jshint:custom',
+            'uglify:custom',
+            'concat:less_custom',
+            'less:custom',
+            'less:custom_min',
+            'concat:css_custom'
+        ]);
+    });
 
 };
